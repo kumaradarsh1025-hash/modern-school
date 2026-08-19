@@ -1,0 +1,552 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Modern School — Attendance & Management Dashboard</title>
+<style>
+*{box-sizing:border-box}body{margin:0;font-family:Arial,Helvetica,sans-serif;background:#f4f7fb;color:#172033}
+button,input,select{font:inherit}button{cursor:pointer}
+.header{height:70px;background:#102d82;color:#fff;display:flex;align-items:center;justify-content:space-between;padding:0 24px}
+.brand{display:flex;align-items:center;gap:12px}.brand img{width:48px;height:52px;object-fit:contain}.brand b{font-size:18px}.brand small{display:block;opacity:.8;margin-top:3px}
+.back{color:#fff;text-decoration:none;border:1px solid #ffffff66;padding:9px 13px;border-radius:7px}
+.layout{display:flex;min-height:calc(100vh - 70px)}
+.sidebar{width:235px;background:#fff;border-right:1px solid #e1e5ec;padding:18px 12px}
+.side-title{font-size:11px;color:#8a94a6;font-weight:bold;padding:9px 12px}.navbtn{width:100%;border:0;background:transparent;text-align:left;padding:12px;border-radius:8px;color:#344054;margin:2px 0}.navbtn:hover,.navbtn.active{background:#eaf0ff;color:#12358d;font-weight:bold}
+.main{flex:1;padding:25px;overflow:auto}.page{display:none}.page.active{display:block}
+h1{margin:0 0 6px;font-size:27px}.subtitle{color:#667085;margin:0 0 22px}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:15px;margin-bottom:20px}
+.stat{background:#fff;border:1px solid #e3e8ef;border-radius:12px;padding:18px;box-shadow:0 2px 7px #0000000a}.stat .label{font-size:12px;color:#667085}.stat .num{font-size:28px;font-weight:bold;margin-top:7px;color:#102d82}
+.panel{background:#fff;border:1px solid #e3e8ef;border-radius:12px;padding:18px;margin-bottom:18px;box-shadow:0 2px 7px #0000000a}.panel h2{font-size:18px;margin:0 0 14px;color:#102d82}
+.grid2{display:grid;grid-template-columns:1.25fr .75fr;gap:18px}
+.tablewrap{overflow:auto}table{width:100%;border-collapse:collapse}th,td{text-align:left;padding:11px;border-bottom:1px solid #edf0f4;font-size:13px;white-space:nowrap}th{color:#667085;background:#f8fafc}
+.badge{padding:5px 8px;border-radius:20px;font-size:11px;font-weight:bold}.present{background:#dcfce7;color:#166534}.absent{background:#fee2e2;color:#991b1b}.late{background:#fef3c7;color:#92400e}
+.form{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}.form input,.form select{width:100%;padding:10px;border:1px solid #d0d5dd;border-radius:7px;background:#fff}.btn{border:0;border-radius:7px;padding:10px 14px;background:#123b98;color:#fff;font-weight:bold}.btn.green{background:#16824b}.btn.red{background:#c93737}.btn.gray{background:#667085}
+.notice{padding:12px;border-left:4px solid #123b98;background:#f7f9ff;margin:9px 0;border-radius:4px}.notice b{display:block;margin-bottom:4px}
+.attendance-actions{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}.smallbtn{padding:7px 10px;border:1px solid #d0d5dd;background:#fff;border-radius:6px}.smallbtn.selected{background:#123b98;color:#fff;border-color:#123b98}
+.progress{height:10px;background:#e8edf3;border-radius:10px;overflow:hidden}.bar{height:100%;background:#16824b}
+canvas{width:100%;height:180px}
+.footer-note{font-size:11px;color:#8a94a6;margin-top:18px}
+@media(max-width:950px){.stats{grid-template-columns:repeat(2,1fr)}.grid2{grid-template-columns:1fr}.sidebar{width:190px}.form{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:650px){.layout{display:block}.sidebar{width:100%;display:flex;overflow:auto}.side-title{display:none}.navbtn{min-width:max-content}.main{padding:14px}.stats{grid-template-columns:1fr 1fr}.form{grid-template-columns:1fr}.header{padding:0 12px}}
+</style>
+
+<style id="schoolBrand">
+.school-brand{display:flex;align-items:center;gap:12px;padding:16px 14px;border-bottom:1px solid rgba(255,255,255,.16);margin-bottom:10px}
+.school-brand img{width:48px;height:48px;object-fit:contain;border-radius:12px;background:#fff;padding:4px}
+.school-brand .school-name{font-weight:800;font-size:17px;line-height:1.1}
+.school-brand .school-sub{font-size:11px;opacity:.75;margin-top:4px}
+.top-school{display:flex;align-items:center;gap:12px}
+.top-school img{width:44px;height:44px;object-fit:contain;background:#fff;border-radius:10px;padding:3px}
+.top-school h2{margin:0;font-size:20px}
+.top-school span{font-size:11px;opacity:.7}
+.live-search-results{position:absolute;z-index:50;left:0;right:0;top:100%;background:#fff;border:1px solid #dfe5f0;border-radius:12px;box-shadow:0 12px 30px rgba(30,45,80,.14);max-height:330px;overflow:auto}
+.search-wrap{position:relative;max-width:680px}
+.live-row{padding:11px 13px;display:flex;justify-content:space-between;gap:12px;cursor:pointer;border-bottom:1px solid #edf0f5}
+.live-row:hover{background:#f5f8ff}
+.live-name{font-weight:700}.live-meta{font-size:12px;color:#667085}
+.brand-card{background:linear-gradient(135deg,#132d86,#315bdc);color:#fff;border-radius:18px;padding:20px;margin-bottom:18px;box-shadow:0 10px 28px rgba(35,65,150,.2)}
+.brand-card h1{margin:0 0 5px}.brand-card p{margin:0;opacity:.85}
+</style>
+
+<style id="loginBrandStyles">
+.login-brand{display:flex;flex-direction:column;align-items:center;text-align:center;margin-bottom:22px}
+.login-brand img{width:82px;height:82px;object-fit:contain;background:#fff;border-radius:22px;padding:7px;box-shadow:0 8px 24px rgba(20,50,120,.15)}
+.login-brand h1{margin:13px 0 3px;font-size:28px;color:#132d86}
+.login-brand p{margin:0;color:#667085;font-size:13px}
+.login-card{max-width:430px;margin:8vh auto;padding:34px;border-radius:24px;background:rgba(255,255,255,.96);box-shadow:0 18px 55px rgba(20,40,100,.16);border:1px solid #e8ecf5}
+.login-card .btn{width:100%;margin-top:10px}
+</style>
+
+<style id="final-school-login-gate">
+body.school-login-active .app-shell{
+  display:none !important;
+}
+body:not(.school-login-active) .app-shell{
+  display:block;
+}
+</style>
+
+</head>
+<body class="admin-locked">
+
+<div id="adminLoginScreen">
+  <div class="admin-login-card">
+    <div class="admin-login-logo">
+      <img src="school-logo.png" alt="Modern School Logo">
+    </div>
+
+    <h1>Modern School, Faridabad</h1>
+
+    <div class="welcome">Welcome!</div>
+
+    <p class="login-subtitle">
+      Kindly enter your credentials to access your account.
+    </p>
+
+    <label>User ID</label>
+    <input id="adminUserId" type="text" placeholder="Enter User ID" autocomplete="username">
+
+    <label>Password</label>
+    <input id="adminPassword" type="password" placeholder="Enter Password" autocomplete="current-password">
+
+    <button id="adminLoginButton" type="button" onclick="modernSchoolLogin()">
+      Login
+    </button>
+
+    <p id="adminLoginError"></p>
+
+    <div class="school-code">
+      School Code For Mobile App: <b>msfbd</b>
+    </div>
+
+    <div class="powered">Powered By</div>
+  </div>
+</div>
+
+<style>
+#adminLoginScreen{
+  position:fixed;
+  inset:0;
+  z-index:999999;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  padding:25px;
+  background:
+    radial-gradient(circle at 15% 20%,rgba(96,165,250,.35),transparent 30%),
+    radial-gradient(circle at 85% 80%,rgba(37,99,235,.25),transparent 32%),
+    linear-gradient(135deg,#eef4ff,#f8fbff 50%,#e8efff);
+  overflow:auto;
+}
+
+.admin-login-card{
+  width:100%;
+  max-width:455px;
+  padding:38px 36px 30px;
+  text-align:center;
+  background:rgba(255,255,255,.97);
+  border:1px solid #e2e8f5;
+  border-radius:30px;
+  box-shadow:0 25px 70px rgba(19,45,134,.22);
+  position:relative;
+  overflow:hidden;
+}
+
+.admin-login-card:before{
+  content:"";
+  position:absolute;
+  top:0;
+  left:0;
+  right:0;
+  height:7px;
+  background:linear-gradient(90deg,#132d86,#2563eb,#60a5fa,#132d86);
+}
+
+.admin-login-logo{
+  margin:8px auto 16px;
+}
+
+.admin-login-logo img{
+  width:100px;
+  height:100px;
+  object-fit:contain;
+  padding:8px;
+  background:white;
+  border-radius:25px;
+  border:1px solid #e5eaf7;
+  box-shadow:0 12px 30px rgba(19,45,134,.18);
+}
+
+.admin-login-card h1{
+  margin:5px 0 8px;
+  color:#132d86;
+  font-size:28px;
+  font-weight:800;
+}
+
+.admin-login-card .welcome{
+  color:#1d4ed8;
+  font-size:21px;
+  font-weight:700;
+  margin-bottom:7px;
+}
+
+.login-subtitle{
+  color:#667085;
+  font-size:14px;
+  line-height:1.5;
+  margin:0 0 25px;
+}
+
+.admin-login-card label{
+  display:block;
+  text-align:left;
+  margin:14px 0 6px;
+  color:#344054;
+  font-size:13px;
+  font-weight:700;
+}
+
+.admin-login-card input{
+  width:100%;
+  padding:14px 15px;
+  border:1px solid #d7deec;
+  border-radius:12px;
+  background:#f8faff;
+  font-size:15px;
+  outline:none;
+  box-sizing:border-box;
+}
+
+.admin-login-card input:focus{
+  border-color:#2563eb;
+  background:white;
+  box-shadow:0 0 0 4px rgba(37,99,235,.10);
+}
+
+#adminLoginButton{
+  width:100%;
+  margin-top:20px;
+  padding:14px;
+  border:0;
+  border-radius:12px;
+  background:linear-gradient(135deg,#132d86,#2563eb);
+  color:white;
+  font-size:16px;
+  font-weight:700;
+  cursor:pointer;
+  box-shadow:0 10px 24px rgba(37,99,235,.25);
+}
+
+#adminLoginButton:hover{
+  transform:translateY(-1px);
+}
+
+#adminLoginError{
+  min-height:18px;
+  margin:10px 0 0;
+  color:#dc2626;
+  font-size:13px;
+}
+
+.school-code{
+  margin-top:24px;
+  padding-top:18px;
+  border-top:1px solid #e8ecf5;
+  color:#667085;
+  font-size:12px;
+}
+
+.school-code b{
+  color:#132d86;
+}
+
+.powered{
+  margin-top:10px;
+  color:#98a2b3;
+  font-size:11px;
+}
+</style>
+
+<script>
+function modernSchoolLogin(){
+  const user = document.getElementById("adminUserId").value.trim();
+  const pass = document.getElementById("adminPassword").value;
+  const error = document.getElementById("adminLoginError");
+
+  if(user === "admin" && pass === "admin123"){
+    sessionStorage.setItem("modern_school_admin_logged_in","yes");
+
+    document.body.classList.remove("admin-locked");
+    document.body.classList.add("admin-unlocked");
+
+    const login = document.getElementById("adminLoginScreen");
+    if(login){
+      login.style.display = "none";
+    }
+
+    document.querySelectorAll(".app-shell").forEach(function(el){
+      el.style.display = "";
+    });
+
+  }else{
+    error.textContent = "Incorrect User ID or Password.";
+  }
+}
+
+
+</script>
+
+<div class="brand-card" style="margin:18px 22px 0">
+  <div class="top-school">
+    <img src="school-logo.png" alt="Modern School logo">
+    <div><h2>Modern School</h2><span>School Management System</span></div>
+  </div>
+</div>
+
+<header class="header">
+  <div class="brand"><img src="school-logo.png"><div><b>MODERN SCHOOL</b><small>Attendance & Management Dashboard</small></div></div>
+  <a class="back" href="index.html">← Public Website</a>
+</header>
+
+<div class="layout">
+<aside class="sidebar">
+  <div class="side-title">MANAGEMENT</div>
+  <button class="navbtn active" data-page="dashboard">📊 Dashboard</button>
+  <button class="navbtn" data-page="attendance">📋 Attendance</button>
+  <button class="navbtn" data-page="students">👨‍🎓 Students</button>
+  <button class="navbtn" data-page="profiles">🔎 Student Profile</button>
+  <button class="navbtn" data-page="employees">👩‍🏫 Employees</button>
+  <button class="navbtn" data-page="fees">💳 Fees</button>
+  <button class="navbtn" data-page="results">📝 Results</button>
+  <button class="navbtn" data-page="notices">📢 Notices</button>
+  <button class="navbtn" data-page="timetable">🗓️ Timetable</button>
+</aside>
+
+<main class="main">
+
+<section class="page active" id="dashboard">
+<h1>Attendance Dashboard</h1><p class="subtitle">School overview — demo data is fictional and provided only as an example.</p>
+<div class="stats">
+<div class="stat"><div class="label">TOTAL STUDENTS</div><div class="num" id="statStudents">0</div></div>
+<div class="stat"><div class="label">PRESENT TODAY</div><div class="num" id="statPresent">0</div></div>
+<div class="stat"><div class="label">ABSENT TODAY</div><div class="num" id="statAbsent">0</div></div>
+<div class="stat"><div class="label">ATTENDANCE %</div><div class="num" id="statPercent">0%</div></div>
+</div>
+<div class="grid2">
+<div class="panel"><h2>Today's Attendance</h2><div class="tablewrap"><table><thead><tr><th>Class</th><th>Students</th><th>Present</th><th>Absent</th><th>Rate</th></tr></thead><tbody id="classSummary"></tbody></table></div></div>
+<div class="panel"><h2>Attendance Rate</h2><div style="font-size:42px;font-weight:bold;color:#16824b;margin:25px 0" id="bigRate">0%</div><div class="progress"><div class="bar" id="rateBar"></div></div><p style="color:#667085;font-size:12px">Demo target: 90%+ daily attendance</p></div>
+</div>
+<div class="panel"><h2>Recent Activity</h2><div id="activity"></div></div>
+</section>
+
+<section class="page" id="attendance">
+<h1>Attendance</h1><p class="subtitle">Select a class and mark Present, Absent or Late.</p>
+<div class="panel">
+<div class="attendance-actions"><select id="attClass" class="smallbtn"><option>Class 10-A</option><option>Class 10-B</option><option>Class 9-A</option><option>Class 8-A</option></select><input id="attDate" type="date" class="smallbtn"><button class="btn green" onclick="markAll('Present')">Mark All Present</button><button class="btn red" onclick="markAll('Absent')">Mark All Absent</button><button class="btn" onclick="saveAttendance()">Save Attendance</button></div>
+<div class="tablewrap"><table><thead><tr><th>Roll</th><th>Student</th><th>Status</th><th>Action</th></tr></thead><tbody id="attendanceTable"></tbody></table></div>
+</div></section>
+
+<section class="page" id="students">
+<h1>Students</h1><p class="subtitle">Manage student records. Sample names below are fictional.</p>
+<div class="panel"><h2>Add Student</h2><div class="form"><input id="sName" placeholder="Student name"><input id="sClass" placeholder="Class e.g. 8-A"><input id="sRoll" placeholder="Roll no."><input id="sParent" placeholder="Parent/Guardian"><button class="btn" onclick="addStudent()">Add Student</button></div></div>
+<div class="panel"><div class="form"><div class="search-wrap"><input id="studentLiveSearch" placeholder="Type 1 letter to search students..." oninput="liveStudentSearch(this.value)" autocomplete="off"><div id="liveResults" class="live-search-results"></div></div><input id="studentSearch" placeholder="Filter table by name, roll or class..." oninput="renderStudents()"><select id="studentClassFilter" onchange="renderStudents()"><option value="All">All Classes</option></select></div></div><div class="panel"><div class="tablewrap"><table><thead><tr><th>Roll</th><th>Name</th><th>Class</th><th>Guardian</th><th>Action</th></tr></thead><tbody id="studentTable"></tbody></table></div></div>
+</section>
+
+<section class="page" id="profiles">
+<h1>Student Profile</h1><p class="subtitle">Search a student to view profile, attendance and fee information.</p>
+<div class="panel"><div class="form"><input id="profileSearch" placeholder="Enter student name or roll..." oninput="renderProfile()"><button class="btn" onclick="printStudentProfile()">🖨️ Print Profile</button></div></div>
+<div id="profileResult"><div class="panel"><p>Search for a student to view their profile.</p></div></div>
+</section>
+<section class="page" id="employees">
+<h1>Employees & Teachers</h1><p class="subtitle">Sample employee records for demonstration.</p>
+<div class="panel"><h2>Add Employee</h2><div class="form"><input id="eName" placeholder="Employee name"><input id="eRole" placeholder="Role"><input id="eDept" placeholder="Department"><input id="ePhone" placeholder="Phone"><button class="btn" onclick="addEmployee()">Add Employee</button></div></div>
+<div class="panel"><div class="tablewrap"><table><thead><tr><th>Name</th><th>Role</th><th>Department</th><th>Phone</th><th>Action</th></tr></thead><tbody id="employeeTable"></tbody></table></div></div>
+</section>
+
+<section class="page" id="fees">
+<h1>Fee Management</h1><p class="subtitle">Fictional demo fee data. You can record payments and filter pending fees.</p>
+<div class="stats">
+<div class="stat"><div class="label">TOTAL BILLED</div><div class="num" id="feeTotal">₹0</div></div>
+<div class="stat"><div class="label">TOTAL COLLECTED</div><div class="num" id="feePaid">₹0</div></div>
+<div class="stat"><div class="label">TOTAL PENDING</div><div class="num" id="feePending">₹0</div></div>
+<div class="stat"><div class="label">PENDING RECORDS</div><div class="num" id="feePendingCount">0</div></div>
+</div>
+<div class="panel">
+<div class="form">
+<input id="feeSearch" placeholder="Search student..." oninput="renderFees()">
+<select id="feeFilter" onchange="renderFees()"><option value="All">All</option><option value="Paid">Paid</option><option value="Pending">Pending</option></select>
+<input id="feeAmount" type="number" placeholder="Payment amount">
+<button class="btn green" onclick="recordPayment()">Record Payment</button>
+</div>
+</div>
+<div class="panel"><div class="tablewrap"><table><thead><tr><thead><tr><th>Student</th><th>Class</th><th>Total</th><th>Paid</th><th>Pending</th><th>Status</th></tr></thead><tbody id="feeTable"></tbody></table></div></div>
+</section>
+
+<section class="page" id="results">
+<h1>Exams & Results</h1><p class="subtitle">Demo examination records.</p>
+<div class="panel"><div class="tablewrap"><table><thead><tr><th>Student</th><th>Class</th><th>Exam</th><th>Percentage</th><th>Grade</th></tr></thead><tbody id="resultTable"></tbody></table></div></div>
+</section>
+
+<section class="page" id="notices">
+<h1>Notices</h1><p class="subtitle">Create school announcements.</p>
+<div class="panel"><div class="form"><input id="nTitle" placeholder="Notice title"><input id="nText" placeholder="Notice message"><button class="btn" onclick="addNotice()">Publish Notice</button></div></div>
+<div class="panel" id="noticeList"></div>
+</section>
+
+<section class="page" id="timetable">
+<h1>Class Timetable</h1><p class="subtitle">Example timetable.</p>
+<div class="panel"><div class="tablewrap"><table><thead><tr><th>Time</th><th>Monday</th><th>Tuesday</th><th>Wednesday</th><th>Thursday</th><th>Friday</th></tr></thead><tbody>
+<tr><td>8:00–8:45</td><td>English</td><td>Maths</td><td>Science</td><td>Hindi</td><td>Maths</td></tr>
+<tr><td>8:45–9:30</td><td>Maths</td><td>Science</td><td>English</td><td>Computer</td><td>Social Science</td></tr>
+<tr><td>9:45–10:30</td><td>Science</td><td>Hindi</td><td>Maths</td><td>English</td><td>Computer</td></tr>
+<tr><td>10:30–11:15</td><td>Social Science</td><td>Computer</td><td>Sports</td><td>Maths</td><td>Science</td></tr>
+</tbody></table></div></div></section>
+
+<div class="footer-note">Demo mode: all sample student, employee and financial data is fictional. Changes are saved locally in this browser.</div>
+</main></div>
+
+<script>
+const demoStudents=[{"id": 1, "name": "Aarav Mehta", "class": "Class 6-A", "roll": "01", "parent": "Kabir Chauhan"}, {"id": 2, "name": "Ananya Singh", "class": "Class 6-A", "roll": "02", "parent": "Ishita Sethi"}, {"id": 3, "name": "Vihaan Joshi", "class": "Class 6-A", "roll": "03", "parent": "Reyansh Mehta"}, {"id": 4, "name": "Myra Patel", "class": "Class 6-A", "roll": "04", "parent": "Aanya Kapoor"}, {"id": 5, "name": "Arjun Iyer", "class": "Class 6-A", "roll": "05", "parent": "Aditya Verma"}, {"id": 6, "name": "Sara Sinha", "class": "Class 6-A", "roll": "06", "parent": "Diya Joshi"}, {"id": 7, "name": "Kabir Sethi", "class": "Class 6-A", "roll": "07", "parent": "Rohan Gupta"}, {"id": 8, "name": "Ishita Sharma", "class": "Class 6-A", "roll": "08", "parent": "Meera Malhotra"}, {"id": 9, "name": "Reyansh Verma", "class": "Class 6-A", "roll": "09", "parent": "Vivaan Iyer"}, {"id": 10, "name": "Aanya Rao", "class": "Class 6-A", "roll": "10", "parent": "Kiara Bhat"}, {"id": 11, "name": "Aditya Malhotra", "class": "Class 6-B", "roll": "01", "parent": "Arnav Chauhan"}, {"id": 12, "name": "Diya Das", "class": "Class 6-B", "roll": "02", "parent": "Anika Sethi"}, {"id": 13, "name": "Rohan Chauhan", "class": "Class 6-B", "roll": "03", "parent": "Yash Mehta"}, {"id": 14, "name": "Meera Jain", "class": "Class 6-B", "roll": "04", "parent": "Navya Kapoor"}, {"id": 15, "name": "Vivaan Kapoor", "class": "Class 6-B", "roll": "05", "parent": "Aarav Verma"}, {"id": 16, "name": "Kiara Khan", "class": "Class 6-B", "roll": "06", "parent": "Ananya Joshi"}, {"id": 17, "name": "Arnav Gupta", "class": "Class 6-B", "roll": "07", "parent": "Vihaan Gupta"}, {"id": 18, "name": "Anika Nair", "class": "Class 6-B", "roll": "08", "parent": "Myra Malhotra"}, {"id": 19, "name": "Yash Bhat", "class": "Class 6-B", "roll": "09", "parent": "Arjun Iyer"}, {"id": 20, "name": "Navya Mishra", "class": "Class 6-B", "roll": "10", "parent": "Sara Bhat"}, {"id": 21, "name": "Aarav Mehta", "class": "Class 7-A", "roll": "01", "parent": "Kabir Chauhan"}, {"id": 22, "name": "Ananya Singh", "class": "Class 7-A", "roll": "02", "parent": "Ishita Sethi"}, {"id": 23, "name": "Vihaan Joshi", "class": "Class 7-A", "roll": "03", "parent": "Reyansh Mehta"}, {"id": 24, "name": "Myra Patel", "class": "Class 7-A", "roll": "04", "parent": "Aanya Kapoor"}, {"id": 25, "name": "Arjun Iyer", "class": "Class 7-A", "roll": "05", "parent": "Aditya Verma"}, {"id": 26, "name": "Sara Sinha", "class": "Class 7-A", "roll": "06", "parent": "Diya Joshi"}, {"id": 27, "name": "Kabir Sethi", "class": "Class 7-A", "roll": "07", "parent": "Rohan Gupta"}, {"id": 28, "name": "Ishita Sharma", "class": "Class 7-A", "roll": "08", "parent": "Meera Malhotra"}, {"id": 29, "name": "Reyansh Verma", "class": "Class 7-A", "roll": "09", "parent": "Vivaan Iyer"}, {"id": 30, "name": "Aanya Rao", "class": "Class 7-A", "roll": "10", "parent": "Kiara Bhat"}, {"id": 31, "name": "Aditya Malhotra", "class": "Class 7-B", "roll": "01", "parent": "Arnav Chauhan"}, {"id": 32, "name": "Diya Das", "class": "Class 7-B", "roll": "02", "parent": "Anika Sethi"}, {"id": 33, "name": "Rohan Chauhan", "class": "Class 7-B", "roll": "03", "parent": "Yash Mehta"}, {"id": 34, "name": "Meera Jain", "class": "Class 7-B", "roll": "04", "parent": "Navya Kapoor"}, {"id": 35, "name": "Vivaan Kapoor", "class": "Class 7-B", "roll": "05", "parent": "Aarav Verma"}, {"id": 36, "name": "Kiara Khan", "class": "Class 7-B", "roll": "06", "parent": "Ananya Joshi"}, {"id": 37, "name": "Arnav Gupta", "class": "Class 7-B", "roll": "07", "parent": "Vihaan Gupta"}, {"id": 38, "name": "Anika Nair", "class": "Class 7-B", "roll": "08", "parent": "Myra Malhotra"}, {"id": 39, "name": "Yash Bhat", "class": "Class 7-B", "roll": "09", "parent": "Arjun Iyer"}, {"id": 40, "name": "Navya Mishra", "class": "Class 7-B", "roll": "10", "parent": "Sara Bhat"}, {"id": 41, "name": "Aarav Mehta", "class": "Class 8-A", "roll": "01", "parent": "Kabir Chauhan"}, {"id": 42, "name": "Ananya Singh", "class": "Class 8-A", "roll": "02", "parent": "Ishita Sethi"}, {"id": 43, "name": "Vihaan Joshi", "class": "Class 8-A", "roll": "03", "parent": "Reyansh Mehta"}, {"id": 44, "name": "Myra Patel", "class": "Class 8-A", "roll": "04", "parent": "Aanya Kapoor"}, {"id": 45, "name": "Arjun Iyer", "class": "Class 8-A", "roll": "05", "parent": "Aditya Verma"}, {"id": 46, "name": "Sara Sinha", "class": "Class 8-A", "roll": "06", "parent": "Diya Joshi"}, {"id": 47, "name": "Kabir Sethi", "class": "Class 8-A", "roll": "07", "parent": "Rohan Gupta"}, {"id": 48, "name": "Ishita Sharma", "class": "Class 8-A", "roll": "08", "parent": "Meera Malhotra"}, {"id": 49, "name": "Reyansh Verma", "class": "Class 8-A", "roll": "09", "parent": "Vivaan Iyer"}, {"id": 50, "name": "Aanya Rao", "class": "Class 8-A", "roll": "10", "parent": "Kiara Bhat"}, {"id": 51, "name": "Aditya Malhotra", "class": "Class 8-B", "roll": "01", "parent": "Arnav Chauhan"}, {"id": 52, "name": "Diya Das", "class": "Class 8-B", "roll": "02", "parent": "Anika Sethi"}, {"id": 53, "name": "Rohan Chauhan", "class": "Class 8-B", "roll": "03", "parent": "Yash Mehta"}, {"id": 54, "name": "Meera Jain", "class": "Class 8-B", "roll": "04", "parent": "Navya Kapoor"}, {"id": 55, "name": "Vivaan Kapoor", "class": "Class 8-B", "roll": "05", "parent": "Aarav Verma"}, {"id": 56, "name": "Kiara Khan", "class": "Class 8-B", "roll": "06", "parent": "Ananya Joshi"}, {"id": 57, "name": "Arnav Gupta", "class": "Class 8-B", "roll": "07", "parent": "Vihaan Gupta"}, {"id": 58, "name": "Anika Nair", "class": "Class 8-B", "roll": "08", "parent": "Myra Malhotra"}, {"id": 59, "name": "Yash Bhat", "class": "Class 8-B", "roll": "09", "parent": "Arjun Iyer"}, {"id": 60, "name": "Navya Mishra", "class": "Class 8-B", "roll": "10", "parent": "Sara Bhat"}, {"id": 61, "name": "Aarav Mehta", "class": "Class 9-A", "roll": "01", "parent": "Kabir Chauhan"}, {"id": 62, "name": "Ananya Singh", "class": "Class 9-A", "roll": "02", "parent": "Ishita Sethi"}, {"id": 63, "name": "Vihaan Joshi", "class": "Class 9-A", "roll": "03", "parent": "Reyansh Mehta"}, {"id": 64, "name": "Myra Patel", "class": "Class 9-A", "roll": "04", "parent": "Aanya Kapoor"}, {"id": 65, "name": "Arjun Iyer", "class": "Class 9-A", "roll": "05", "parent": "Aditya Verma"}, {"id": 66, "name": "Sara Sinha", "class": "Class 9-A", "roll": "06", "parent": "Diya Joshi"}, {"id": 67, "name": "Kabir Sethi", "class": "Class 9-A", "roll": "07", "parent": "Rohan Gupta"}, {"id": 68, "name": "Ishita Sharma", "class": "Class 9-A", "roll": "08", "parent": "Meera Malhotra"}, {"id": 69, "name": "Reyansh Verma", "class": "Class 9-A", "roll": "09", "parent": "Vivaan Iyer"}, {"id": 70, "name": "Aanya Rao", "class": "Class 9-A", "roll": "10", "parent": "Kiara Bhat"}, {"id": 71, "name": "Aditya Malhotra", "class": "Class 9-B", "roll": "01", "parent": "Arnav Chauhan"}, {"id": 72, "name": "Diya Das", "class": "Class 9-B", "roll": "02", "parent": "Anika Sethi"}, {"id": 73, "name": "Rohan Chauhan", "class": "Class 9-B", "roll": "03", "parent": "Yash Mehta"}, {"id": 74, "name": "Meera Jain", "class": "Class 9-B", "roll": "04", "parent": "Navya Kapoor"}, {"id": 75, "name": "Vivaan Kapoor", "class": "Class 9-B", "roll": "05", "parent": "Aarav Verma"}, {"id": 76, "name": "Kiara Khan", "class": "Class 9-B", "roll": "06", "parent": "Ananya Joshi"}, {"id": 77, "name": "Arnav Gupta", "class": "Class 9-B", "roll": "07", "parent": "Vihaan Gupta"}, {"id": 78, "name": "Anika Nair", "class": "Class 9-B", "roll": "08", "parent": "Myra Malhotra"}, {"id": 79, "name": "Yash Bhat", "class": "Class 9-B", "roll": "09", "parent": "Arjun Iyer"}, {"id": 80, "name": "Navya Mishra", "class": "Class 9-B", "roll": "10", "parent": "Sara Bhat"}, {"id": 81, "name": "Aarav Mehta", "class": "Class 10-A", "roll": "01", "parent": "Kabir Chauhan"}, {"id": 82, "name": "Ananya Singh", "class": "Class 10-A", "roll": "02", "parent": "Ishita Sethi"}, {"id": 83, "name": "Vihaan Joshi", "class": "Class 10-A", "roll": "03", "parent": "Reyansh Mehta"}, {"id": 84, "name": "Myra Patel", "class": "Class 10-A", "roll": "04", "parent": "Aanya Kapoor"}, {"id": 85, "name": "Arjun Iyer", "class": "Class 10-A", "roll": "05", "parent": "Aditya Verma"}, {"id": 86, "name": "Sara Sinha", "class": "Class 10-A", "roll": "06", "parent": "Diya Joshi"}, {"id": 87, "name": "Kabir Sethi", "class": "Class 10-A", "roll": "07", "parent": "Rohan Gupta"}, {"id": 88, "name": "Ishita Sharma", "class": "Class 10-A", "roll": "08", "parent": "Meera Malhotra"}, {"id": 89, "name": "Reyansh Verma", "class": "Class 10-A", "roll": "09", "parent": "Vivaan Iyer"}, {"id": 90, "name": "Aanya Rao", "class": "Class 10-A", "roll": "10", "parent": "Kiara Bhat"}, {"id": 91, "name": "Aditya Malhotra", "class": "Class 10-B", "roll": "01", "parent": "Arnav Chauhan"}, {"id": 92, "name": "Diya Das", "class": "Class 10-B", "roll": "02", "parent": "Anika Sethi"}, {"id": 93, "name": "Rohan Chauhan", "class": "Class 10-B", "roll": "03", "parent": "Yash Mehta"}, {"id": 94, "name": "Meera Jain", "class": "Class 10-B", "roll": "04", "parent": "Navya Kapoor"}, {"id": 95, "name": "Vivaan Kapoor", "class": "Class 10-B", "roll": "05", "parent": "Aarav Verma"}, {"id": 96, "name": "Kiara Khan", "class": "Class 10-B", "roll": "06", "parent": "Ananya Joshi"}, {"id": 97, "name": "Arnav Gupta", "class": "Class 10-B", "roll": "07", "parent": "Vihaan Gupta"}, {"id": 98, "name": "Anika Nair", "class": "Class 10-B", "roll": "08", "parent": "Myra Malhotra"}, {"id": 99, "name": "Yash Bhat", "class": "Class 10-B", "roll": "09", "parent": "Arjun Iyer"}, {"id": 100, "name": "Navya Mishra", "class": "Class 10-B", "roll": "10", "parent": "Sara Bhat"}, {"id": 101, "name": "Aarav Mehta", "class": "Class 11-A", "roll": "01", "parent": "Kabir Chauhan"}, {"id": 102, "name": "Ananya Singh", "class": "Class 11-A", "roll": "02", "parent": "Ishita Sethi"}, {"id": 103, "name": "Vihaan Joshi", "class": "Class 11-A", "roll": "03", "parent": "Reyansh Mehta"}, {"id": 104, "name": "Myra Patel", "class": "Class 11-A", "roll": "04", "parent": "Aanya Kapoor"}, {"id": 105, "name": "Arjun Iyer", "class": "Class 11-A", "roll": "05", "parent": "Aditya Verma"}, {"id": 106, "name": "Sara Sinha", "class": "Class 11-A", "roll": "06", "parent": "Diya Joshi"}, {"id": 107, "name": "Kabir Sethi", "class": "Class 11-A", "roll": "07", "parent": "Rohan Gupta"}, {"id": 108, "name": "Ishita Sharma", "class": "Class 11-A", "roll": "08", "parent": "Meera Malhotra"}, {"id": 109, "name": "Reyansh Verma", "class": "Class 11-A", "roll": "09", "parent": "Vivaan Iyer"}, {"id": 110, "name": "Aanya Rao", "class": "Class 11-A", "roll": "10", "parent": "Kiara Bhat"}, {"id": 111, "name": "Aditya Malhotra", "class": "Class 12-A", "roll": "01", "parent": "Arnav Chauhan"}, {"id": 112, "name": "Diya Das", "class": "Class 12-A", "roll": "02", "parent": "Anika Sethi"}, {"id": 113, "name": "Rohan Chauhan", "class": "Class 12-A", "roll": "03", "parent": "Yash Mehta"}, {"id": 114, "name": "Meera Jain", "class": "Class 12-A", "roll": "04", "parent": "Navya Kapoor"}, {"id": 115, "name": "Vivaan Kapoor", "class": "Class 12-A", "roll": "05", "parent": "Aarav Verma"}, {"id": 116, "name": "Kiara Khan", "class": "Class 12-A", "roll": "06", "parent": "Ananya Joshi"}, {"id": 117, "name": "Arnav Gupta", "class": "Class 12-A", "roll": "07", "parent": "Vihaan Gupta"}, {"id": 118, "name": "Anika Nair", "class": "Class 12-A", "roll": "08", "parent": "Myra Malhotra"}, {"id": 119, "name": "Yash Bhat", "class": "Class 12-A", "roll": "09", "parent": "Arjun Iyer"}, {"id": 120, "name": "Navya Mishra", "class": "Class 12-A", "roll": "10", "parent": "Sara Bhat"}];
+const demoEmployees=[{"name": "Neha Verma", "role": "Senior Teacher", "dept": "Science", "phone": "90000 10001"}, {"name": "Rahul Malhotra", "role": "PGT", "dept": "Mathematics", "phone": "90000 10002"}, {"name": "Priya Nair", "role": "TGT", "dept": "English", "phone": "90000 10003"}, {"name": "Amit Joshi", "role": "Admin Officer", "dept": "Administration", "phone": "90000 10004"}, {"name": "Kavita Rao", "role": "TGT", "dept": "Social Science", "phone": "90000 10005"}, {"name": "Suresh Patel", "role": "PE Teacher", "dept": "Sports", "phone": "90000 10006"}, {"name": "Meena Iyer", "role": "Librarian", "dept": "Library", "phone": "90000 10007"}, {"name": "Vikram Das", "role": "Accountant", "dept": "Accounts", "phone": "90000 10008"}];
+const fees=[["Aarav Mehta", "6-A", "56000", "51000", "5000", "Pending"], ["Ananya Singh", "6-A", "52000", "37000", "15000", "Pending"], ["Vihaan Joshi", "6-A", "48000", "38000", "10000", "Pending"], ["Myra Patel", "6-A", "60000", "45000", "15000", "Pending"], ["Arjun Iyer", "6-A", "48000", "33000", "15000", "Pending"], ["Sara Sinha", "6-A", "56000", "46000", "10000", "Pending"], ["Kabir Sethi", "6-A", "60000", "50000", "10000", "Pending"], ["Ishita Sharma", "6-A", "48000", "38000", "10000", "Pending"], ["Reyansh Verma", "6-A", "56000", "41000", "15000", "Pending"], ["Aanya Rao", "6-A", "52000", "42000", "10000", "Pending"], ["Aditya Malhotra", "6-B", "60000", "60000", "0", "Paid"], ["Diya Das", "6-B", "56000", "46000", "10000", "Pending"], ["Rohan Chauhan", "6-B", "48000", "48000", "0", "Paid"], ["Meera Jain", "6-B", "65000", "60000", "5000", "Pending"], ["Vivaan Kapoor", "6-B", "60000", "45000", "15000", "Pending"], ["Kiara Khan", "6-B", "48000", "38000", "10000", "Pending"], ["Arnav Gupta", "6-B", "56000", "41000", "15000", "Pending"], ["Anika Nair", "6-B", "48000", "38000", "10000", "Pending"], ["Yash Bhat", "6-B", "65000", "60000", "5000", "Pending"], ["Navya Mishra", "6-B", "52000", "42000", "10000", "Pending"], ["Aarav Mehta", "7-A", "52000", "47000", "5000", "Pending"], ["Ananya Singh", "7-A", "52000", "47000", "5000", "Pending"], ["Vihaan Joshi", "7-A", "60000", "55000", "5000", "Pending"], ["Myra Patel", "7-A", "52000", "52000", "0", "Paid"], ["Arjun Iyer", "7-A", "56000", "51000", "5000", "Pending"], ["Sara Sinha", "7-A", "60000", "50000", "10000", "Pending"], ["Kabir Sethi", "7-A", "52000", "42000", "10000", "Pending"], ["Ishita Sharma", "7-A", "48000", "38000", "10000", "Pending"], ["Reyansh Verma", "7-A", "60000", "55000", "5000", "Pending"], ["Aanya Rao", "7-A", "48000", "43000", "5000", "Pending"]];
+const results=[
+["Aarav Mehta","10-A","Unit Test 1","86%","A"],["Ananya Sharma","10-A","Unit Test 1","92%","A+"],["Vihaan Kapoor","10-A","Unit Test 1","78%","B+"],["Myra Singh","10-B","Unit Test 1","88%","A"],["Arjun Verma","10-B","Unit Test 1","74%","B+"]
+];
+let savedStudents=JSON.parse(localStorage.getItem("ms_students")||"null");
+let savedEmployees=JSON.parse(localStorage.getItem("ms_employees")||"null");
+
+let students=(Array.isArray(savedStudents) && savedStudents.length>0)
+  ? savedStudents
+  : demoStudents;
+
+let employees=(Array.isArray(savedEmployees) && savedEmployees.length>0)
+  ? savedEmployees
+  : demoEmployees;
+
+if(!Array.isArray(savedStudents) || savedStudents.length===0){
+  localStorage.setItem("ms_students",JSON.stringify(demoStudents));
+}
+
+if(!Array.isArray(savedEmployees) || savedEmployees.length===0){
+  localStorage.setItem("ms_employees",JSON.stringify(demoEmployees));
+}
+let statuses={"1": "Present", "2": "Present", "3": "Present", "4": "Present", "5": "Present", "6": "Present", "7": "Present", "8": "Present", "9": "Present", "10": "Present", "11": "Late", "12": "Present", "13": "Absent", "14": "Present", "15": "Present", "16": "Present", "17": "Present", "18": "Present", "19": "Present", "20": "Present", "21": "Present", "22": "Late", "23": "Present", "24": "Present", "25": "Present", "26": "Absent", "27": "Present", "28": "Present", "29": "Present", "30": "Present", "31": "Present", "32": "Present", "33": "Late", "34": "Present", "35": "Present", "36": "Present", "37": "Present", "38": "Present", "39": "Absent", "40": "Present", "41": "Present", "42": "Present", "43": "Present", "44": "Late", "45": "Present", "46": "Present", "47": "Present", "48": "Present", "49": "Present", "50": "Present", "51": "Present", "52": "Absent", "53": "Present", "54": "Present", "55": "Late", "56": "Present", "57": "Present", "58": "Present", "59": "Present", "60": "Present", "61": "Present", "62": "Present", "63": "Present", "64": "Present", "65": "Absent", "66": "Late", "67": "Present", "68": "Present", "69": "Present", "70": "Present", "71": "Present", "72": "Present", "73": "Present", "74": "Present", "75": "Present", "76": "Present", "77": "Late", "78": "Absent", "79": "Present", "80": "Present", "81": "Present", "82": "Present", "83": "Present", "84": "Present", "85": "Present", "86": "Present", "87": "Present", "88": "Late", "89": "Present", "90": "Present", "91": "Absent", "92": "Present", "93": "Present", "94": "Present", "95": "Present", "96": "Present", "97": "Present", "98": "Present", "99": "Late", "100": "Present", "101": "Present", "102": "Present", "103": "Present", "104": "Absent", "105": "Present", "106": "Present", "107": "Present", "108": "Present", "109": "Present", "110": "Late", "111": "Present", "112": "Present", "113": "Present", "114": "Present", "115": "Present", "116": "Present", "117": "Absent", "118": "Present", "119": "Present", "120": "Present"};
+let notices=JSON.parse(localStorage.getItem("ms_notices")||"null")||[
+{title:"Parent-Teacher Meeting",text:"PTM for Classes 8–10 will be held on Saturday."},
+{title:"Science Exhibition",text:"Students are invited to register their projects with the Science Department."}
+];
+
+function save(){localStorage.setItem("ms_students",JSON.stringify(students));localStorage.setItem("ms_employees",JSON.stringify(employees));localStorage.setItem("ms_notices",JSON.stringify(notices))}
+function clsKey(s){return s.class.replace("Class ","")}
+function currentStatus(id){return statuses[id]||"Present"}
+function render(){
+document.getElementById("statStudents").textContent=students.length;
+let present=students.filter(s=>currentStatus(s.id)==="Present").length, absent=students.filter(s=>currentStatus(s.id)==="Absent").length;
+document.getElementById("statPresent").textContent=present;document.getElementById("statAbsent").textContent=absent;
+let rate=Math.round(present/students.length*100)||0;document.getElementById("statPercent").textContent=rate+"%";document.getElementById("bigRate").textContent=rate+"%";document.getElementById("rateBar").style.width=rate+"%";
+let groups={};students.forEach(s=>{let c=s.class;groups[c]??={n:0,p:0,a:0};groups[c].n++;currentStatus(s.id)==="Present"?groups[c].p++:currentStatus(s.id)==="Absent"?groups[c].a++:groups[c].p++});
+document.getElementById("classSummary").innerHTML=Object.entries(groups).map(([c,g])=>`<tr><td>${c}</td><td>${g.n}</td><td>${g.p}</td><td>${g.a}</td><td>${Math.round(g.p/g.n*100)}%</td></tr>`).join("");
+document.getElementById("studentTable").innerHTML=students.map(s=>`<tr><td>${s.roll}</td><td>${s.name}</td><td>${s.class}</td><td>${s.parent}</td><td><button class="smallbtn" onclick="removeStudent(${s.id})">Delete</button></td></tr>`).join("");
+document.getElementById("employeeTable").innerHTML=employees.map((e,i)=>`<tr><td>${e.name}</td><td>${e.role}</td><td>${e.dept}</td><td>${e.phone}</td><td><button class="smallbtn" onclick="removeEmployee(${i})">Delete</button></td></tr>`).join("");
+renderFees();
+document.getElementById("resultTable").innerHTML=results.map(r=>`<tr><td>${r[0]}</td><td>${r[1]}</td><td>${r[2]}</td><td>${r[3]}</td><td><span class="badge present">${r[4]}</span></td></tr>`).join("");
+document.getElementById("noticeList").innerHTML=notices.map((n,i)=>`<div class="notice"><b>${n.title}</b>${n.text} <button class="smallbtn" onclick="removeNotice(${i})" style="float:right">Delete</button></div>`).join("");
+populateClassFilter();renderStudents();renderAttendance();renderProfile();renderActivity()
+}
+function renderAttendance(){
+let selected=document.getElementById("attClass").value;
+let list=students.filter(s=>s.class===selected);
+document.getElementById("attendanceTable").innerHTML=list.map(s=>`<tr><td>${s.roll}</td><td>${s.name}</td><td><span class="badge ${currentStatus(s.id)==="Present"?"present":currentStatus(s.id)==="Absent"?"absent":"late"}">${currentStatus(s.id)}</span></td><td><button class="smallbtn ${currentStatus(s.id)==="Present"?"selected":""}" onclick="setStatus(${s.id},'Present')">Present</button> <button class="smallbtn ${currentStatus(s.id)==="Absent"?"selected":""}" onclick="setStatus(${s.id},'Absent')">Absent</button> <button class="smallbtn ${currentStatus(s.id)==="Late"?"selected":""}" onclick="setStatus(${s.id},'Late')">Late</button></td></tr>`).join("");
+}
+function setStatus(id,status){statuses[id]=status;render()}
+function markAll(status){students.filter(s=>s.class===document.getElementById("attClass").value).forEach(s=>statuses[s.id]=status);render()}
+function saveAttendance(){localStorage.setItem("ms_attendance_"+(document.getElementById("attDate").value||"today"),JSON.stringify(statuses));alert("Attendance saved successfully.")}
+function addStudent(){let name=sName.value.trim(),cl=sClass.value.trim(),roll=sRoll.value.trim(),parent=sParent.value.trim();if(!name||!cl||!roll)return alert("Please enter name, class and roll number.");students.push({id:Date.now(),name,class:cl.startsWith("Class ")?cl:"Class "+cl,roll,parent:parent||"Demo Guardian"});save();[sName,sClass,sRoll,sParent].forEach(x=>x.value="");render()}
+function removeStudent(id){students=students.filter(s=>s.id!==id);save();render()}
+function addEmployee(){let name=eName.value.trim(),role=eRole.value.trim(),dept=eDept.value.trim(),phone=ePhone.value.trim();if(!name||!role)return alert("Please enter employee name and role.");employees.push({name,role,dept,phone});save();[eName,eRole,eDept,ePhone].forEach(x=>x.value="");render()}
+function removeEmployee(i){employees.splice(i,1);save();render()}
+function addNotice(){let title=nTitle.value.trim(),text=nText.value.trim();if(!title||!text)return alert("Enter title and message.");notices.unshift({title,text});save();nTitle.value="";nText.value="";render()}
+function removeNotice(i){notices.splice(i,1);save();render()}
+
+function renderFees(){
+ let q=(document.getElementById("feeSearch")?.value||"").toLowerCase();
+ let filter=document.getElementById("feeFilter")?.value||"All";
+ let list=fees.filter(f=>(f[0].toLowerCase().includes(q)||f[1].toLowerCase().includes(q))&&(filter==="All"||f[5]===filter));
+ let total=fees.reduce((a,f)=>a+Number(f[2]),0),paid=fees.reduce((a,f)=>a+Number(f[3]),0),pending=fees.reduce((a,f)=>a+Number(f[4]),0);
+ document.getElementById("feeTotal").textContent="₹"+total.toLocaleString();
+ document.getElementById("feePaid").textContent="₹"+paid.toLocaleString();
+ document.getElementById("feePending").textContent="₹"+pending.toLocaleString();
+ document.getElementById("feePendingCount").textContent=fees.filter(f=>f[5]==="Pending").length;
+ document.getElementById("feeTable").innerHTML=list.map((f,i)=>{
+   let idx=fees.indexOf(f);
+   return `<tr><td>${f[0]}</td><td>${f[1]}</td><td>₹${Number(f[2]).toLocaleString()}</td><td>₹${Number(f[3]).toLocaleString()}</td><td>₹${Number(f[4]).toLocaleString()}</td><td><span class="badge ${f[5]==="Paid"?"present":"absent"}">${f[5]}</span></td><td>${f[5]==="Pending"?`<button class="smallbtn" onclick="quickPay(${idx})">Mark Paid</button>`:"✓"}</td></tr>`
+ }).join("");
+}
+function quickPay(i){fees[i][3]=fees[i][2];fees[i][4]="0";fees[i][5]="Paid";renderFees();alert("Payment recorded for "+fees[i][0]);}
+function recordPayment(){
+ let name=(document.getElementById("feeSearch")?.value||"").trim().toLowerCase();
+ let amount=Number(document.getElementById("feeAmount")?.value||0);
+ if(!name||!amount)return alert("Enter a student name in Search and a payment amount.");
+ let f=fees.find(x=>x[0].toLowerCase().includes(name));
+ if(!f)return alert("Student not found in the demo fee ledger.");
+ f[3]=String(Math.min(Number(f[2]),Number(f[3])+amount)); f[4]=String(Number(f[2])-Number(f[3])); f[5]=Number(f[4])===0?"Paid":"Pending";
+ document.getElementById("feeAmount").value=""; renderFees(); alert("Payment recorded successfully.");
+}
+
+
+function liveStudentSearch(q){
+ const box=document.getElementById("liveResults"); if(!box)return;
+ q=(q||"").trim().toLowerCase();
+ if(!q){box.innerHTML="";box.style.display="none";return;}
+ const list=students.filter(s=>s.name.toLowerCase().includes(q)||s.class.toLowerCase().includes(q)||String(s.roll).toLowerCase().includes(q)).slice(0,30);
+ box.innerHTML=list.length?list.map(s=>`<div class="live-row" onclick="openProfile(${s.id});document.getElementById('studentLiveSearch').value='${s.name.replace(/'/g,"\\'")}';document.getElementById('liveResults').style.display='none'"><div><div class="live-name">${s.name}</div><div class="live-meta">Roll ${s.roll} · Class ${s.class}</div></div><div class="live-meta">${(attendanceStats(s.id)||{rate:0}).rate}% attendance</div></div>`).join(""):'<div class="live-row"><div>No matching student found.</div></div>';
+ box.style.display="block";
+}
+document.addEventListener("click",function(e){
+ const w=document.getElementById("studentLiveSearch"),b=document.getElementById("liveResults");
+ if(b&&w&&!w.contains(e.target)&&!b.contains(e.target))b.style.display="none";
+});
+function populateClassFilter(){
+ const el=document.getElementById("studentClassFilter"); if(!el)return;
+ const old=el.value;
+ el.innerHTML='<option value="All">All Classes</option>'+[...new Set(students.map(s=>s.class))].sort().map(c=>`<option>${c}</option>`).join("");
+ if([...el.options].some(o=>o.value===old))el.value=old;
+}
+function renderStudents(){
+ const q=(document.getElementById("studentSearch")?.value||"").toLowerCase();
+ const cf=document.getElementById("studentClassFilter")?.value||"All";
+ const list=students.filter(s=>(s.name.toLowerCase().includes(q)||s.roll.toLowerCase().includes(q)||s.class.toLowerCase().includes(q))&&(cf==="All"||s.class===cf));
+ const el=document.getElementById("studentTable"); if(!el)return;
+ el.innerHTML=list.map(s=>`<tr><td>${s.roll}</td><td>${s.name}</td><td>${s.class}</td><td>${s.parent}</td><td><button class="smallbtn" onclick="openProfile(${s.id})">Profile</button> <button class="smallbtn" onclick="removeStudent(${s.id})">Delete</button></td></tr>`).join("");
+}
+function attendanceStats(id){
+ const st=statuses[id]||"Present";
+ const total=20;
+ const present=st==="Absent"?17:st==="Late"?19:20;
+ return {total,present,absent:total-present,rate:Math.round(present/total*100)};
+}
+function renderProfile(){
+ const q=(document.getElementById("profileSearch")?.value||"").trim().toLowerCase();
+ const box=document.getElementById("profileResult"); if(!box)return;
+ if(!q){box.innerHTML="<div class='panel'><p>Search for a student to view their profile.</p></div>";return;}
+ const s=students.find(x=>x.name.toLowerCase().includes(q)||x.roll.toLowerCase()===q);
+ if(!s){box.innerHTML="<div class='panel'><p>Student not found.</p></div>";return;}
+ const a=attendanceStats(s.id), f=fees.find(x=>x[0]===s.name);
+ window.currentProfileId=s.id;
+ box.innerHTML=`<div class="grid2"><div class="panel"><h2>Student Information</h2>
+ <p><b>Name:</b> ${s.name}</p><p><b>Student ID:</b> MS-${String(s.id).padStart(4,"0")}</p><p><b>Class:</b> ${s.class}</p><p><b>Roll:</b> ${s.roll}</p><p><b>Guardian:</b> ${s.parent}</p></div>
+ <div class="panel"><h2>Attendance Summary</h2><div style="font-size:38px;font-weight:bold;color:#16824b">${a.rate}%</div><p>Present: ${a.present} days &nbsp; Absent: ${a.absent} days</p><div class="progress"><div class="bar" style="width:${a.rate}%"></div></div></div></div>
+ <div class="panel"><h2>Fee Summary</h2>${f?`<p><b>Total:</b> ₹${Number(f[2]).toLocaleString()} &nbsp; <b>Paid:</b> ₹${Number(f[3]).toLocaleString()} &nbsp; <b>Pending:</b> ₹${Number(f[4]).toLocaleString()}</p><span class="badge ${f[5]==="Paid"?"present":"absent"}">${f[5]}</span> <button class="smallbtn" onclick="printFeeReceipt(${fees.indexOf(f)})">🧾 Print Fee Receipt</button>`:"<p>No fee record in demo ledger.</p>"}</div>
+ <div class="panel"><h2>Academic Snapshot</h2><p>Session: 2026–27</p><p>House: Blue House</p><p>Co-curricular: Science Club</p></div>`;
+}
+function openProfile(id){
+ document.querySelector('[data-page="profiles"]').click();
+ const s=students.find(x=>x.id===id);
+ document.getElementById("profileSearch").value=s?s.name:"";
+ renderProfile();
+}
+function printStudentProfile(){
+ if(!window.currentProfileId){alert("First open a student profile.");return;}
+ const s=students.find(x=>x.id===window.currentProfileId), a=attendanceStats(s.id), f=fees.find(x=>x[0]===s.name);
+ const w=window.open("","_blank"); if(!w)return;
+ w.document.write(`<html><head><title>Student Profile</title><style>body{font-family:Arial;padding:35px}h1{color:#102d82}table{border-collapse:collapse;width:100%}td{border:1px solid #ccc;padding:10px}</style></head><body>
+
+
+
+
+
+\n</body></html>`); w.document.close();
+}
+function printFeeReceipt(i){
+ const f=fees[i], w=window.open("","_blank"); if(!w)return;
+ w.document.write(`<html><head><title>Fee Receipt</title><style>body{font-family:Arial;padding:35px}h1{color:#102d82}table{border-collapse:collapse;width:100%}td{border:1px solid #ccc;padding:10px}</style></head><body><h1>MODERN SCHOOL</h1><h2>Fee Payment Receipt</h2><table><tr><td>Student</td><td>${f[0]}</td></tr><tr><td>Class</td><td>${f[1]}</td></tr><tr><td>Total Fee</td><td>₹${Number(f[2]).toLocaleString()}</td></tr><tr><td>Paid</td><td>₹${Number(f[3]).toLocaleString()}</td></tr><tr><td>Pending</td><td>₹${Number(f[4]).toLocaleString()}</td></tr><tr><td>Status</td><td>${f[5]}</td></tr></table><p>Receipt No: MS-FEE-${Date.now()}</p><script>window.print()<\/script></body></html>`); w.document.close();
+}
+function renderActivity(){document.getElementById("activity").innerHTML="<div class='notice'><b>09:05 AM</b>Attendance started for Class 10-A.</div><div class='notice'><b>08:50 AM</b>Morning assembly attendance recorded.</div><div class='notice'><b>Yesterday</b>Fee ledger updated for 5 demo students.</div>"}
+document.querySelectorAll(".navbtn").forEach(btn=>btn.onclick=()=>{document.querySelectorAll(".navbtn").forEach(x=>x.classList.remove("active"));btn.classList.add("active");document.querySelectorAll(".page").forEach(x=>x.classList.remove("active"));document.getElementById(btn.dataset.page).classList.add("active")});
+document.getElementById("attClass").onchange=renderAttendance;
+document.getElementById("attDate").value=new Date().toISOString().slice(0,10);
+render();
+</script>
+</body></html>
